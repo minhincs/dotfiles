@@ -1,0 +1,19 @@
+[general]
+autostart = [
+  "noctalia",
+  "fcitx5 -d --replace",
+  "systemctl --user start 9router.service",
+]
+mod_key = "Super"
+xwayland = true
+show_cheatsheet = false
+
+[environment]
+GTK_IM_MODULE="fcitx"
+QT_IM_MODULE="fcitx"
+QT_IM_MODULES="wayland;fcitx;ibus"
+XMODIFIERS="@im=fcitx"
+SDL_IM_MODULE="fcitx"
+GLFW_IM_MODULE="ibus"
+QT_QPA_PLATFORMTHEME="qt6ct"
+_JAVA_AWT_WM_NONREPARENTING="1"

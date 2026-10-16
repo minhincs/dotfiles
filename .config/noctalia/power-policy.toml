@@ -1,0 +1,7 @@
+[hooks]
+started = 'if [ "$(cat /sys/class/power_supply/AC/online)" -eq 1 ]; then noctalia msg power-set balanced; else noctalia msg power-set power-saver; fi'
+
+battery_charging = "noctalia msg power-set balanced"
+battery_plugged = "noctalia msg power-set balanced"
+
+battery_discharging = "noctalia msg power-set power-saver"

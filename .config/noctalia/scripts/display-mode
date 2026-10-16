@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+INTERNAL_OUTPUT="eDP-1"
+INTERNAL_MODE="1920x1200@60.003Hz"
+MIRROR_PID_FILE="${XDG_RUNTIME_DIR:-/tmp}/noctalia-display-mode-wl-mirror.pid"
+
+notify_error() {
+    notify-send -a Noctalia "Display mode" "$1" 2>/dev/null || true
+    printf 'display-mode: %s\n' "$1" >&2
+}
+
+die() {
+    notify_error "$1"
+    exit 1
+}
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || die "Required command is missing: $1"
+}
+
+read_outputs() {
+    local outputs
+    outputs="$(wlr-randr --json 2>/dev/null)" || die "Could not query compositor outputs."
+    jq -e 'type == "array"' >/dev/null <<<"$outputs" || die "wlr-randr returned invalid output data."
+    printf '%s' "$outputs"
+}
+
+external_output_from_json() {
+    # ponytail: manage one external output; iterate this list when multi-external layouts are needed.
+    jq -r --arg internal "$INTERNAL_OUTPUT" '
+        map(select(.name != $internal))
+        | sort_by([if .enabled then 0 else 1 end, .name])
+        | .[0].name // empty
+    '
+}
+
+best_mode_from_json() {
+    local output="$1"
+    # Highest pixel count wins; refresh rate breaks ties.
+    jq -er --arg output "$output" '
+        map(select(.name == $output))[0].modes
+        | if length == 0 then error("output has no modes") else . end
+        | max_by([(.width * .height), .refresh])
+        | "\(.width)x\(.height)@\(.refresh)Hz"
+    '
+}
+
+best_logical_width_from_json() {
+    local output="$1"
+    jq -er --arg output "$output" '
+        map(select(.name == $output))[0] as $head
+        | $head.modes
+        | max_by([(.width * .height), .refresh])
+        | (.width / ($head.scale // 1) | round)
+    '
+}
+
+resolve_outputs() {
+    OUTPUTS_JSON="$(read_outputs)"
+    jq -e --arg internal "$INTERNAL_OUTPUT" 'any(.[]; .name == $internal)' >/dev/null <<<"$OUTPUTS_JSON" \
+        || die "Internal monitor $INTERNAL_OUTPUT was not found."
+
+    EXTERNAL_OUTPUT="$(external_output_from_json <<<"$OUTPUTS_JSON")"
+    [[ -n "$EXTERNAL_OUTPUT" ]] || die "No external monitor is connected."
+
+    BEST_MODE="$(best_mode_from_json "$EXTERNAL_OUTPUT" <<<"$OUTPUTS_JSON")" \
+        || die "Could not select a mode for $EXTERNAL_OUTPUT."
+    BEST_LOGICAL_WIDTH="$(best_logical_width_from_json "$EXTERNAL_OUTPUT" <<<"$OUTPUTS_JSON")" \
+        || die "Could not read logical mode width for $EXTERNAL_OUTPUT."
+}
+
+run_randr() {
+    local error
+    if ! error="$(wlr-randr "$@" 2>&1)"; then
+        printf '%s\n' "$error" >&2
+        die "Could not apply the display mode."
+    fi
+}
+
+focus_internal_output() {
+    local focused_output
+
+    focused_output="$(umbriel workspaces --json 2>/dev/null | jq -er '
+        [.[] | select(.focused == true) | .output][0] // empty
+    ')" || return 1
+    [[ "$focused_output" == "$INTERNAL_OUTPUT" ]] && return 0
+    umbriel msg output-focus-right >/dev/null 2>&1
+}
+
+output_is_on() {
+    local output="$1"
+    local outputs
+    outputs="$(read_outputs)"
+    jq -e --arg output "$output" '
+        any(.[]; .name == $output and .enabled)
+    ' >/dev/null <<<"$outputs"
+}
+
+stop_mirror() {
+    local pid command_name
+    [[ -r "$MIRROR_PID_FILE" ]] || return 0
+
+    read -r pid <"$MIRROR_PID_FILE" || pid=""
+    if [[ "$pid" =~ ^[0-9]+$ ]] && [[ -r "/proc/$pid/comm" ]]; then
+        read -r command_name <"/proc/$pid/comm" || command_name=""
+        [[ "$command_name" == "wl-mirror" ]] && kill "$pid" 2>/dev/null || true
+    fi
+    rm -f "$MIRROR_PID_FILE"
+}
+
+arrange_extended() {
+    run_randr \
+        --output "$EXTERNAL_OUTPUT" --on --mode "$BEST_MODE" --pos 0,0 \
+        --output "$INTERNAL_OUTPUT" --on --mode "$INTERNAL_MODE" --pos "$BEST_LOGICAL_WIDTH",0
+    output_is_on "$EXTERNAL_OUTPUT" || die "Could not enable $EXTERNAL_OUTPUT."
+    output_is_on "$INTERNAL_OUTPUT" || die "Could not enable $INTERNAL_OUTPUT."
+}
+
+set_extended() {
+    stop_mirror
+    arrange_extended
+}
+
+set_external_only() {
+    stop_mirror
+    run_randr \
+        --output "$EXTERNAL_OUTPUT" --on --mode "$BEST_MODE" --pos 0,0 \
+        --output "$INTERNAL_OUTPUT" --off
+    output_is_on "$EXTERNAL_OUTPUT" || die "Could not enable $EXTERNAL_OUTPUT."
+}
+
+set_internal_only() {
+    stop_mirror
+    run_randr \
+        --output "$INTERNAL_OUTPUT" --on --mode "$INTERNAL_MODE" --pos 0,0 \
+        --output "$EXTERNAL_OUTPUT" --off
+    output_is_on "$INTERNAL_OUTPUT" || die "Could not enable $INTERNAL_OUTPUT."
+}
+
+set_mirror() {
+    local mirror_pid
+    require_command wl-mirror
+    stop_mirror
+    arrange_extended
+
+    wl-mirror --no-show-cursor --fullscreen-output "$EXTERNAL_OUTPUT" "$INTERNAL_OUTPUT" >/dev/null 2>&1 &
+    mirror_pid=$!
+    printf '%s\n' "$mirror_pid" >"$MIRROR_PID_FILE"
+
+    sleep 0.5
+    if ! kill -0 "$mirror_pid" 2>/dev/null; then
+        rm -f "$MIRROR_PID_FILE"
+        die "wl-mirror could not start."
+    fi
+    if ! focus_internal_output; then
+        stop_mirror
+        die "Could not move the cursor to $INTERNAL_OUTPUT."
+    fi
+}
+
+show_options() {
+    resolve_outputs
+    printf '%s\n' "Extended" "External only" "Internal only" "Mirror"
+}
+
+apply_mode() {
+    resolve_outputs
+    case "${1:-}" in
+        "Extended") set_extended ;;
+        "External only") set_external_only ;;
+        "Internal only") set_internal_only ;;
+        "Mirror") set_mirror ;;
+        *) die "Unknown display mode." ;;
+    esac
+}
+
+self_test() {
+    local fixture external mode logical_width no_scale_width
+    fixture='[
+        {"name": "eDP-1", "enabled": true, "scale": 1.5, "modes": [
+            {"width": 1920, "height": 1200, "refresh": 60.003}
+        ]},
+        {"name": "DP-2", "enabled": false, "scale": 2.0, "modes": [
+            {"width": 1920, "height": 1080, "refresh": 144.0},
+            {"width": 2560, "height": 1440, "refresh": 60.0},
+            {"width": 2560, "height": 1440, "refresh": 75.0}
+        ]}
+    ]'
+    external="$(external_output_from_json <<<"$fixture")"
+    mode="$(best_mode_from_json "$external" <<<"$fixture")"
+    logical_width="$(best_logical_width_from_json "$external" <<<"$fixture")"
+    no_scale_width="$(best_logical_width_from_json "DP-3" <<<'[{"name":"DP-3","modes":[{"width":1920,"height":1080,"refresh":60}]}]')"
+    [[ "$external" == "DP-2" ]]
+    [[ "$mode" == "2560x1440@75.0Hz" ]]
+    [[ "$logical_width" == "1280" ]]
+    [[ "$no_scale_width" == "1920" ]]
+    printf 'display-mode self-test: ok\n'
+}
+
+case "${1:-}" in
+    list)
+        require_command wlr-randr
+        require_command jq
+        show_options
+        ;;
+    apply)
+        require_command wlr-randr
+        require_command jq
+        apply_mode "${2:-}"
+        ;;
+    self-test)
+        require_command jq
+        self_test
+        ;;
+    *)
+        printf 'usage: %s {list|apply <mode>|self-test}\n' "$0" >&2
+        exit 2
+        ;;
+esac

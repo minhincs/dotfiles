@@ -1,0 +1,80 @@
+# Gruvbox Material Hard
+[colors]
+background = "#1d2021ff"
+text_primary = "#d4be98ff"
+text_muted = "#a89984ff"
+accent_primary = "#d8a657ff"
+accent_secondary = "#7daea3ff"
+warning = "#d8a657ff"
+error = "#ea6962ff"
+insert_hint = "#d8a65780"
+backdrop = "#282828ff"
+shadow = "#1416177f"
+
+[colors.border]
+focused = "#d8a657ff"
+unfocused = "#504945ff"
+outer = "#1d2021ff"
+
+[colors.overview]
+background_tint = "#1d202188"
+badge = "#d8a657ff"
+workspace_background = "#1d2021ff"
+
+[colors.tab_bar]
+background = "#282828ff"
+text = "#a89984ff"
+active = "#d8a657ff"
+active_text = "#1d2021ff"
+active_unfocused = "#504945ff"
+active_unfocused_text = "#d4be98ff"
+urgent = "#ea6962ff"
+urgent_text = "#1d2021ff"
+
+[appearance]
+prefer_no_csd = true
+border_width = 0
+outer_border_width = 0
+corner_radius = 0
+drag_opacity = 0.75
+opaque_fullscreen = true
+
+[appearance.blur]
+enabled = true
+optimized = true
+passes = 2
+radius = 4
+
+[appearance.shadow]
+enabled = false
+softness = 16
+offset_x = 0
+offset_y = 0
+
+[animation]
+enabled = false
+duration_ms = 100
+curve = "easeout"
+
+[animation.windows_in]
+style = "slide"
+scale = 0.96
+
+[animation.windows_out]
+style = "slide"
+
+[animation.overview]
+workspace_curve = "easeout"
+
+[animation.scratchpad]
+dim = 0.1
+scale = 0.8
+
+[animation.layers]
+enabled = true
+duration_ms = 80
+
+[overview]
+zoom = 0.5
+background_blur = true
+shortcuts = false

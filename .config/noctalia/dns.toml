@@ -1,0 +1,7 @@
+[shell.launcher.dmenu.entry.dns]
+command = "$HOME/.config/noctalia/scripts/dns list"
+exec = "$HOME/.config/noctalia/scripts/dns apply \"{selection}\""
+prefix = "dns"
+label = "DNS"
+glyph = "dns"
+global = false

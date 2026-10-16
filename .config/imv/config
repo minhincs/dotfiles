@@ -1,0 +1,27 @@
+[options]
+overlay = false
+overlay_font = Hack Nerd Font:10
+overlay_position_bottom = true
+overlay_text = " [$imv_current_index/$imv_file_count] $imv_current_file (${imv_width}x${imv_height}) ${imv_scale}% "
+overlay_background_alpha = 44
+
+[binds]
+q = quit
+<Escape> = quit
+h = prev 1
+l = next 1
+k = zoom 5
+j = zoom -5
+<equal> = zoom 5
+<minus> = zoom -5
+<Shift+plus> = zoom 5
+<Shift+underscore> = zoom -5
+a = zoom actual
+0 = reset
+c = center
+r = rotate by 90
+<Shift+R> = rotate by -90
+x = flip horizontal
+<Shift+X> = flip vertical
+f = fullscreen
+b = overlay

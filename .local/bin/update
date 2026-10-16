@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+status=0
+
+sudo dnf upgrade --refresh -y \
+  && sudo dnf autoremove -y \
+  && flatpak update -y \
+  && flatpak uninstall --unused -y \
+  || status=$?
+
+if ((status == 0)); then
+  printf '\nUpdate complete.\n'
+else
+  printf '\nUpdate failed with status %d.\n' "$status" >&2
+fi
+
+read -r -p 'Press Enter to close...'
+exit "$status"

@@ -1,0 +1,20 @@
+[output.eDP-1]
+enabled = true
+workspaces = 4
+workspace_axis = "horizontal"
+mode = "1920x1200@60"
+position = [0, 0]
+scale = 1.5
+
+# [output.HDMI-A-1]
+# enabled = true
+# position = [-1920, 0]
+# scale = 1.0
+
+[output."Acer Technologies EK241Y E 1432072153W01"]
+enabled = true
+workspaces = 4
+workspace_axis = "horizontal"
+mode = "1920x1080@100"
+position = [-1920, 0]
+scale = 1.0

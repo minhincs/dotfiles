@@ -1,0 +1,14 @@
+[layout]
+mode = "master"
+gap = 4
+
+[layout.scrolling]
+default_extent_fraction = 1.0
+center_underfull_strip = true
+center_focused = "never"
+
+[layout.master]
+position = "left"
+default_width_fraction = 0.5
+new_on_top = true
+new_becomes_master = false

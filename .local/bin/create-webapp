@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+browser=${WEBAPP_BROWSER:-brave-origin}
+command -v "$browser" >/dev/null 2>&1 \
+  || { echo "Browser not found: $browser" >&2; exit 1; }
+
+read -rp "App name: " name
+read -rp "Website URL: " url
+
+[[ -n $name && $name != *$'\n'* ]] || { echo "App name cannot be empty" >&2; exit 1; }
+[[ -n $url && $url != *[[:space:]]* ]] || { echo "Website URL cannot contain whitespace" >&2; exit 1; }
+
+if [[ "$url" != http://* && "$url" != https://* ]]; then
+    url="https://$url"
+fi
+
+file_name=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9._-')
+[[ -n $file_name ]] || { echo "App name does not produce a valid filename" >&2; exit 1; }
+desktop_dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+desktop_file=$desktop_dir/$file_name.desktop
+
+mkdir -p "$desktop_dir"
+
+url=${url//%/%%}
+url=${url//\\/\\\\}
+url=${url//\"/\\\"}
+
+cat > "$desktop_file" <<EOF
+[Desktop Entry]
+Type=Application
+Name=$name
+Exec=$browser --app="$url"
+Terminal=false
+EOF
+
+echo "Created: $desktop_file"
+

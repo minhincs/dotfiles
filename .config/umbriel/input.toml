@@ -1,0 +1,20 @@
+[input]
+middle_click_paste = false
+
+[input.touchpad]
+tap = true
+natural_scroll = true
+
+[input.tablet]
+enabled = false
+map_to_output = "eDP-1"
+
+[input.cursor]
+size = 28
+theme = "Capitaine Cursors (Gruvbox) - White"
+hide_when_typing = true
+hide_timeout_ms = 1000
+
+[input.touch]
+enabled = true
+map_to_output = "eDP-1"

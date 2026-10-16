@@ -1,0 +1,7 @@
+[shell.launcher.dmenu.entry.screen-record]
+command = "$HOME/.config/noctalia/scripts/screen-record list"
+exec = "$HOME/.config/noctalia/scripts/screen-record apply \"{selection}\""
+prefix = "rec"
+label = "Screen record"
+glyph = "video"
+global = false

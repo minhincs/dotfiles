@@ -1,0 +1,84 @@
+[[window_rule]]
+match.is_floating = true
+shadow = true
+border_width = 1
+border_color_focused = "#d4be98ff"
+border_color_unfocused = "#7c6f64ff"
+
+[[window_rule]]
+match.is_focused = false
+opacity = 0.86
+blur = true
+blur_optimized = false
+
+[[window_rule]]
+match.is_focused = true
+opacity = 1.0
+
+[[window_rule]]
+match.is_pinned = true
+opacity = 1.0
+border_width = 1
+border_color_focused = "#7daea3ff"
+border_color_unfocused = "#57756fff"
+
+[[window_rule]]
+match.is_scratchpad = true
+border_width = 1
+border_color_focused = "#d8a657ff"
+border_color_unfocused = "#8d7041ff"
+
+[[window_rule]]
+match.app_id = "^foot$"
+blur = true
+blur_optimized = false
+
+[[window_rule]]
+match.app_id = "^spotify$"
+default_scratchpad = "default"
+default_focused = true
+
+[[window_rule]]
+match.app_id = "^dev.noctalia.Noctalia$"
+default_floating = true
+default_floating_size = { width = 0.80, height = 0.80 }
+
+[[window_rule]]
+match.app_id = "^imv"
+default_floating = true
+default_floating_size = { width = 0.80, height = 0.80 }
+
+[[window_rule]]
+match.app_id = "^dev.noctalia.UmbrielSharePicker$"
+default_floating = true
+default_floating_size_px = { width = 800, height = 600 }
+
+[[window_rule]]
+match.app_id = "^xdg-desktop-portal-gtk$"
+default_floating = true
+default_floating_size_px = { width = 900, height = 700 }
+
+[[window_rule]]
+match.app_id = "^(Waydroid|waydroid)"
+default_fullscreen = true
+
+[[window_rule]]
+match.app_id = "^virt-manager$"
+match.title = "on QEMU/KVM$"
+default_maximize = true
+
+[[window_rule]]
+match.title = "^(Picture-in-Picture|Picture in picture)$"
+default_floating = true
+default_maximize = false
+default_pinned = true
+default_position = { x = 20, y = 20, anchor = "bottom_right" }
+
+[[window_rule]]
+match.title = "^notificationtoasts_.+_desktop"
+default_position = { x = 0, y = 0, anchor = "bottom_right" }
+default_focused = false
+default_pinned = true
+border_width = 0
+shadow = true
+

@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+OUTPUT_DIR="$HOME/Videos/Recordings"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/screen_recorder"
+STATE_FILE="${XDG_RUNTIME_DIR:-/tmp}/noctalia-screen-record-${UID}.state"
+LOG_FILE="$STATE_DIR/dmenu-gpu-screen-recorder.log"
+APP_ID="com.dec05eba.gpu_screen_recorder"
+
+die() {
+    notify-send -a Noctalia -u critical "Screen record" "$1" 2>/dev/null || true
+    printf 'screen-record: %s\n' "$1" >&2
+    exit 1
+}
+
+valid_recorder_pid() {
+    local pid="$1" argv0
+    [[ "$pid" =~ ^[0-9]+$ ]] && [[ -r "/proc/$pid/cmdline" ]] || return 1
+    IFS= read -r -d '' argv0 <"/proc/$pid/cmdline" || return 1
+    [[ "${argv0##*/}" == gpu-screen-recorder ]]
+}
+
+state_pid() {
+    local pid
+    [[ -r "$STATE_FILE" ]] || return 1
+    read -r pid <"$STATE_FILE" || return 1
+    valid_recorder_pid "$pid" || return 1
+    printf '%s\n' "$pid"
+}
+
+recording_pid() {
+    local pid
+    if pid="$(state_pid)"; then
+        printf '%s\n' "$pid"
+        return 0
+    fi
+    rm -f "$STATE_FILE"
+
+    while read -r pid; do
+        if valid_recorder_pid "$pid"; then
+            printf '%s\n' "$pid"
+            return 0
+        fi
+    done < <(pgrep -f '(^|/)[g]pu-screen-recorder( |$)' 2>/dev/null || true)
+    return 1
+}
+
+clear_state_for_pid() {
+    local expected="$1" stored=""
+    [[ -r "$STATE_FILE" ]] && read -r stored <"$STATE_FILE" || true
+    [[ "$stored" == "$expected" ]] && rm -f "$STATE_FILE"
+}
+
+show_options() {
+    flatpak info --show-ref "$APP_ID" >/dev/null 2>&1 || die "GPU Screen Recorder Flatpak is not installed."
+    if recording_pid >/dev/null; then
+        printf '%s\n' "Stop recording"
+    else
+        printf '%s\n' "No Audio" "Output" "Microphone" "Output + Microphone"
+    fi
+}
+
+audio_args() {
+    case "$1" in
+        "No Audio") ;;
+        "Output") AUDIO_ARGS=(-ac aac -ab 192 -a default_output) ;;
+        "Microphone") AUDIO_ARGS=(-ac aac -ab 192 -a default_input) ;;
+        "Output + Microphone") AUDIO_ARGS=(-ac aac -ab 192 -a "default_output|default_input") ;;
+        *) return 1 ;;
+    esac
+}
+
+start_recording() {
+    local selection="$1" pid launcher_pid status output_file active_pid attempt
+    local -a AUDIO_ARGS=()
+    local -a command_args
+
+    if active_pid="$(recording_pid)"; then
+        die "A recording is already active (PID $active_pid)."
+    fi
+    audio_args "$selection" || die "Unknown recording mode."
+
+    mkdir -p "$OUTPUT_DIR" "$STATE_DIR"
+    output_file="$OUTPUT_DIR/recording_$(date '+%Y-%m-%d_%H-%M-%S').mp4"
+    command_args=(
+        flatpak run --command=gpu-screen-recorder "$APP_ID"
+        -w portal
+        -f 60
+        -fm vfr
+        -k h264
+        -encoder gpu
+        -bm qp
+        -q very_high
+        -cursor yes
+        -cr limited
+        -v no
+        "${AUDIO_ARGS[@]}"
+        -o "$output_file"
+    )
+
+    printf '=== gpu-screen-recorder %s ===\n' "$(date '+%Y-%m-%d %H:%M:%S')" >"$LOG_FILE"
+    "${command_args[@]}" >>"$LOG_FILE" 2>&1 &
+    launcher_pid=$!
+
+    pid=""
+    for attempt in {1..50}; do
+        if pid="$(recording_pid)"; then
+            break
+        fi
+        kill -0 "$launcher_pid" 2>/dev/null || break
+        sleep 0.1
+    done
+    if [[ -z "$pid" ]]; then
+        die "gpu-screen-recorder could not start. See $LOG_FILE"
+    fi
+    printf '%s\n%s\n' "$pid" "$output_file" >"$STATE_FILE"
+    set +e
+    wait "$launcher_pid"
+    status=$?
+    set -e
+    clear_state_for_pid "$pid"
+
+    if [[ -s "$output_file" ]]; then
+        notify-send -a Noctalia "Screen record" "Saved to $output_file" 2>/dev/null || true
+    elif ! grep -Eqi 'cancell?ed by the user' "$LOG_FILE" 2>/dev/null \
+        && (( status != 0 )); then
+        die "Recording failed. See $LOG_FILE"
+    fi
+}
+
+stop_recording() {
+    local pid
+    pid="$(recording_pid)" || die "No recording is active."
+    kill -INT "$pid" 2>/dev/null || die "Could not stop recording PID $pid."
+}
+
+self_test() {
+    local -a AUDIO_ARGS=()
+    ! valid_recorder_pid "$$"
+    audio_args "Output + Microphone"
+    [[ "${AUDIO_ARGS[*]}" == '-ac aac -ab 192 -a default_output|default_input' ]]
+    AUDIO_ARGS=()
+    audio_args "No Audio"
+    [[ ${#AUDIO_ARGS[@]} -eq 0 ]]
+    printf 'screen-record self-test: ok\n'
+}
+
+case "${1:-}" in
+    list)
+        show_options
+        ;;
+    apply)
+        if [[ "${2:-}" == "Stop recording" ]]; then
+            stop_recording
+        else
+            start_recording "${2:-}"
+        fi
+        ;;
+    self-test)
+        self_test
+        ;;
+    *)
+        printf 'usage: %s {list|apply <mode>|self-test}\n' "$0" >&2
+        exit 2
+        ;;
+esac

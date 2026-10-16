@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+APP_ID=""
+TITLE=""
+declare -a FOOT_OPTIONS=()
+
+while (( $# > 0 )); do
+  case "$1" in
+    --app-id=*)
+      APP_ID="${1#*=}"
+      shift
+      ;;
+    --title=*)
+      TITLE="${1#*=}"
+      shift
+      ;;
+    --working-directory=*)
+      FOOT_OPTIONS+=("$1")
+      shift
+      ;;
+    --hold)
+      FOOT_OPTIONS+=("$1")
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+if (( $# == 0 )); then
+  exec foot "${FOOT_OPTIONS[@]}"
+fi
+
+APP_ID="${APP_ID:-${1##*/}}"
+TITLE="${TITLE:-$APP_ID}"
+
+exec foot "${FOOT_OPTIONS[@]}" --app-id "$APP_ID" --title "$TITLE" -- "$@"
+

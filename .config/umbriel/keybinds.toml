@@ -1,0 +1,87 @@
+[keybinds]
+# Applications and Noctalia
+"Mod+Return" = { action = "spawn:foot", repeat = false }
+"Mod+Space" = { action = "spawn:noctalia msg panel-toggle launcher", repeat = false }
+"Mod+W" = { action = "spawn:flatpak run app.zen_browser.zen", repeat = false }
+"Mod+C" = { action = "spawn:noctalia msg panel-toggle clipboard", repeat = false }
+"Mod+E" = { action = "spawn:thunar", repeat = false }
+"Mod+Shift+E" = { action = "spawn:foot -e yazi", repeat = false }
+"Mod+Ctrl+L" = { action = "spawn:noctalia msg session lock", repeat = false }
+"Mod+Grave" = { action = "spawn:fcitx5-remote -t", repeat = false }
+"Mod+B" = { action = "spawn:noctalia msg bar-toggle", repeat = false }
+
+# Media and brightness through Noctalia
+"XF86AudioRaiseVolume" = { action = "spawn:noctalia msg volume-up", repeat = false, allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn:noctalia msg volume-down", repeat = false, allow_when_locked = true }
+"Shift+XF86AudioRaiseVolume" = { action = "spawn:noctalia msg brightness-up", repeat = false, allow_when_locked = true }
+"Shift+XF86AudioLowerVolume" = { action = "spawn:noctalia msg brightness-down", repeat = false, allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn:noctalia msg volume-mute", repeat = false, allow_when_locked = true }
+"XF86AudioMicMute" = { action = "spawn:noctalia msg mic-mute", repeat = false, allow_when_locked = true }
+"XF86MonBrightnessUp" = { action = "spawn:noctalia msg brightness-up", repeat = false, allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn:noctalia msg brightness-down", repeat = false, allow_when_locked = true }
+
+# Focus
+"Mod+J" = "window-focus-next"
+"Mod+K" = "window-focus-previous"
+"Mod+H" = "workspace-previous"
+"Mod+L" = "workspace-next"
+"Mod+Tab" = { action = "spawn:noctalia msg window-switcher hold", repeat = false }
+
+# Move 
+"Mod+Shift+H" = "window-move-to-workspace-previous"
+"Mod+Shift+L" = "window-move-to-workspace-next"
+"Mod+Shift+J" = "window-swap-next"
+"Mod+Shift+K" = "window-swap-previous"
+"Mod+Shift+Return" = "window-swap-left"
+
+# Default scratchpad
+"Mod+N" = "scratchpad-toggle"
+"Mod+Shift+N" = "window-toggle-scratchpad"
+"Mod+Ctrl+N" = "scratchpad-focus-next"
+
+# Outputs
+"Mod+Comma" = "output-focus-left"
+"Mod+Period" = "output-focus-right"
+"Mod+Shift+Comma" = "window-move-to-output-left"
+"Mod+Shift+Period" = "window-move-to-output-right"
+"Mod+Ctrl+Comma" = "workspace-move-to-output-left"
+"Mod+Ctrl+Period" = "workspace-move-to-output-right"
+
+# Workspaces
+"Mod+1" = "workspace-switch:1"
+"Mod+2" = "workspace-switch:2"
+"Mod+3" = "workspace-switch:3"
+"Mod+4" = "workspace-switch:4"
+"Mod+Shift+1" = "window-move-to-workspace:1"
+"Mod+Shift+2" = "window-move-to-workspace:2"
+"Mod+Shift+3" = "window-move-to-workspace:3"
+"Mod+Shift+4" = "window-move-to-workspace:4"
+
+# Layout
+"Mod+Shift+Space" = { action = "workspace-set-layout:toggle:master,scrolling" }
+"Mod+Equal" = { action = "spawn:$HOME/.config/umbriel/helpers/master-ratio-extent 0.05" }
+"Mod+Minus" = { action = "spawn:$HOME/.config/umbriel/helpers/master-ratio-extent -0.05" }
+"Mod+Shift+Equal" = "layout-master-count-increase"
+"Mod+Shift+Minus" = "layout-master-count-decrease"
+"Mod+0" = "window-set-primary-extent:0.5"
+
+# Window state
+"Mod+Q" = "window-close"
+"Mod+M" = "window-toggle-maximize-to-edges"
+"Mod+F" = "window-toggle-fullscreen"
+"Mod+V" = "window-toggle-floating"
+"Mod+P" = "window-toggle-pinned"
+
+# Overview and screenshots
+"Mod+O" = { action = "overview-toggle", repeat = false }
+"Mod+S" = { action = "spawn:noctalia msg screenshot-fullscreen", repeat = false }
+"Mod+Shift+S" = { action = "spawn:noctalia msg screenshot-region", repeat = false }
+"Mod+Ctrl+S" = { action = "spawn:noctalia msg screenshot-annotate", repeat = false }
+
+# Session
+"Mod+Escape" = { action = "shortcuts-inhibit-toggle", allow_when_inhibited = true, repeat = false }
+"Mod+Ctrl+Q" = { action = "session-quit", repeat = false }
+
+# Hot corners
+[hot_corners.top_left]
+enabled = false

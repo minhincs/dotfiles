@@ -1,0 +1,15 @@
+#!/bin/sh
+
+[ "$#" -eq 1 ] || { printf 'usage: %s <delta>\n' "$0" >&2; exit 2; }
+delta=$(jq -nr --arg value "$1" '$value | tonumber? | select(. != 0 and . > -1 and . < 1)')
+[ -n "$delta" ] || { printf 'delta must be a nonzero fraction between -1 and 1\n' >&2; exit 2; }
+
+workspace=$(umbriel workspaces --json | jq -er 'first(.[] | select(.focused == true and .layout == "master") | .id)') || exit 1
+delta=$(umbriel windows --json | jq -er --arg workspace "$workspace" --argjson delta "$delta" '
+  [.[] | select(.workspace == $workspace and .floating == false)] as $tiled
+  # ponytail: master is left; use layout position when supporting right or center masters.
+  | ($tiled | map(.x) | min) as $master_x
+  | first($tiled[] | select(.focused == true) | if .x == $master_x then $delta else -$delta end)
+') || exit 1
+
+umbriel msg "window-modify-primary-extent:$delta"

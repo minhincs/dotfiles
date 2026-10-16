@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+notify_error() {
+    notify-send -a Noctalia -u critical "DNS" "$1" 2>/dev/null || true
+    printf 'dns: %s\n' "$1" >&2
+}
+
+die() {
+    notify_error "$1"
+    exit 1
+}
+
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || die "Required command is missing: $1"
+}
+
+show_options() {
+    printf '%s\n' \
+        "DHCP" \
+        "Quad9" \
+        "Cloudflare" \
+        "Google"
+}
+
+dns_values() {
+    case "$1" in
+        "DHCP")
+            DNS4=""
+            DNS6=""
+            IGNORE_AUTO="no"
+            ;;
+        "Cloudflare")
+            DNS4="1.1.1.1 1.0.0.1"
+            DNS6="2606:4700:4700::1111 2606:4700:4700::1001"
+            IGNORE_AUTO="yes"
+            ;;
+        "Quad9")
+            DNS4="9.9.9.9 149.112.112.112"
+            DNS6="2620:fe::fe 2620:fe::9"
+            IGNORE_AUTO="yes"
+            ;;
+        "Google")
+            DNS4="8.8.8.8 8.8.4.4"
+            DNS6="2001:4860:4860::8888 2001:4860:4860::8844"
+            IGNORE_AUTO="yes"
+            ;;
+        *) return 1 ;;
+    esac
+}
+
+default_device() {
+    local device
+
+    device="$(ip -4 route show default 2>/dev/null | awk '
+        $1 == "default" {
+            for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }
+        }
+    ')"
+    if [[ -z "$device" ]]; then
+        device="$(ip -6 route show default 2>/dev/null | awk '
+            $1 == "default" {
+                for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }
+            }
+        ')"
+    fi
+    [[ -n "$device" ]] || return 1
+    printf '%s\n' "$device"
+}
+
+apply_dns() {
+    local selection="$1" device uuid connection error DNS4 DNS6 IGNORE_AUTO
+    dns_values "$selection" || die "Unknown DNS provider."
+
+    device="$(default_device)" || die "No active default network connection was found."
+    uuid="$(nmcli -g GENERAL.CON-UUID device show "$device" 2>/dev/null | head -n 1)"
+    [[ "$uuid" =~ ^[[:xdigit:]]{8}-([[:xdigit:]]{4}-){3}[[:xdigit:]]{12}$ ]] \
+        || die "NetworkManager connection for $device was not found."
+    connection="$(nmcli -g connection.id connection show uuid "$uuid" 2>/dev/null)" \
+        || die "Could not read the active NetworkManager connection."
+
+    if ! error="$(nmcli connection modify uuid "$uuid" \
+        ipv4.ignore-auto-dns "$IGNORE_AUTO" ipv4.dns "$DNS4" \
+        ipv6.ignore-auto-dns "$IGNORE_AUTO" ipv6.dns "$DNS6" 2>&1)"; then
+        printf '%s\n' "$error" >&2
+        die "Could not update DNS for $connection."
+    fi
+    if ! error="$(nmcli device reapply "$device" 2>&1)"; then
+        printf '%s\n' "$error" >&2
+        die "DNS was saved, but could not be applied. Reconnect $connection."
+    fi
+
+    notify-send -a Noctalia "DNS" "$selection applied to $connection" 2>/dev/null || true
+}
+
+self_test() {
+    local DNS4 DNS6 IGNORE_AUTO
+
+    dns_values "Cloudflare"
+    [[ "$DNS4" == "1.1.1.1 1.0.0.1" ]]
+    [[ "$DNS6" == "2606:4700:4700::1111 2606:4700:4700::1001" ]]
+    [[ "$IGNORE_AUTO" == "yes" ]]
+
+    dns_values "DHCP"
+    [[ -z "$DNS4" && -z "$DNS6" && "$IGNORE_AUTO" == "no" ]]
+    ! dns_values "Unknown"
+    printf 'dns self-test: ok\n'
+}
+
+case "${1:-}" in
+    list)
+        show_options
+        ;;
+    apply)
+        require_command nmcli
+        require_command ip
+        apply_dns "${2:-}"
+        ;;
+    self-test)
+        self_test
+        ;;
+    *)
+        printf 'usage: %s {list|apply <provider>|self-test}\n' "$0" >&2
+        exit 2
+        ;;
+esac

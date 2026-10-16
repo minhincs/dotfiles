@@ -1,0 +1,7 @@
+[shell.launcher.dmenu.entry.display-mode]
+command = "$HOME/.config/noctalia/scripts/display-mode list"
+exec = "$HOME/.config/noctalia/scripts/display-mode apply \"{selection}\""
+prefix = "disp"
+label = "Display mode"
+glyph = "device-desktop"
+global = false

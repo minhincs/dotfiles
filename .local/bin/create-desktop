@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+[[ $# == 1 ]] || { echo "Usage: create-desktop <executable>" >&2; exit 2; }
+
+executable=$1
+if [[ $executable != */* ]]; then
+  executable=$(command -v -- "$executable") || { echo "Executable not found: $1" >&2; exit 1; }
+else
+  executable=$(realpath -e -- "$executable") || { echo "Executable not found: $1" >&2; exit 1; }
+fi
+[[ -x $executable ]] || { echo "Not executable: $executable" >&2; exit 1; }
+
+read -r -p "Application name: " name
+[[ -n $name && $name != *$'\n'* ]] || { echo "Application name cannot be empty" >&2; exit 1; }
+
+slug=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9._-')
+[[ -n $slug ]] || { echo "Application name does not produce a valid filename" >&2; exit 1; }
+
+desktop_dir=${XDG_DATA_HOME:-$HOME/.local/share}/applications
+desktop_file=$desktop_dir/$slug.desktop
+desktop_exec=${executable//%/%%}
+desktop_exec=${desktop_exec//\\/\\\\}
+desktop_exec=${desktop_exec//\"/\\\"}
+mkdir -p "$desktop_dir"
+
+cat >"$desktop_file" <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=$name
+Exec="$desktop_exec"
+Terminal=false
+EOF
+
+echo "Created: $desktop_file"
