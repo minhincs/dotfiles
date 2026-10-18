@@ -63,11 +63,6 @@ match.app_id = "^(Waydroid|waydroid)"
 default_fullscreen = true
 
 [[window_rule]]
-match.app_id = "^virt-manager$"
-match.title = "on QEMU/KVM$"
-default_maximize = true
-
-[[window_rule]]
 match.title = "^(Picture-in-Picture|Picture in picture)$"
 default_floating = true
 default_maximize = false

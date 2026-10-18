@@ -2,7 +2,7 @@
 # Applications and Noctalia
 "Mod+Return" = { action = "spawn:foot", repeat = false }
 "Mod+Space" = { action = "spawn:noctalia msg panel-toggle launcher", repeat = false }
-"Mod+W" = { action = "spawn:flatpak run app.zen_browser.zen", repeat = false }
+"Mod+W" = { action = "spawn:brave-origin", repeat = false }
 "Mod+C" = { action = "spawn:noctalia msg panel-toggle clipboard", repeat = false }
 "Mod+E" = { action = "spawn:thunar", repeat = false }
 "Mod+Shift+E" = { action = "spawn:foot -e yazi", repeat = false }
