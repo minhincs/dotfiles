@@ -12,4 +12,4 @@ delta=$(umbriel windows --json | jq -er --arg workspace "$workspace" --argjson d
   | first($tiled[] | select(.focused == true) | if .x == $master_x then $delta else -$delta end)
 ') || exit 1
 
-umbriel msg "window-modify-primary-extent:$delta"
+umbriel msg window-modify-primary-extent "$delta"

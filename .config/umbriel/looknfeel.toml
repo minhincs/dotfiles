@@ -66,10 +66,6 @@ style = "slide"
 [animation.overview]
 workspace_curve = "easeout"
 
-[animation.scratchpad]
-dim = 0.1
-scale = 0.8
-
 [animation.layers]
 enabled = true
 duration_ms = 80

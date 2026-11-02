@@ -10,5 +10,5 @@ center_focused = "never"
 [layout.master]
 position = "left"
 default_width_fraction = 0.5
-new_on_top = true
+new_on_top = false
 new_becomes_master = false

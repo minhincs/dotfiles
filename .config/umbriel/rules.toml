@@ -9,7 +9,6 @@ border_color_unfocused = "#7c6f64ff"
 match.is_focused = false
 opacity = 0.86
 blur = true
-blur_optimized = false
 
 [[window_rule]]
 match.is_focused = true
@@ -23,20 +22,8 @@ border_color_focused = "#7daea3ff"
 border_color_unfocused = "#57756fff"
 
 [[window_rule]]
-match.is_scratchpad = true
-border_width = 1
-border_color_focused = "#d8a657ff"
-border_color_unfocused = "#8d7041ff"
-
-[[window_rule]]
 match.app_id = "^foot$"
 blur = true
-blur_optimized = false
-
-[[window_rule]]
-match.app_id = "^spotify$"
-default_scratchpad = "default"
-default_focused = true
 
 [[window_rule]]
 match.app_id = "^dev.noctalia.Noctalia$"
@@ -46,7 +33,6 @@ default_floating_size = { width = 0.80, height = 0.80 }
 [[window_rule]]
 match.app_id = "^imv"
 default_floating = true
-default_floating_size = { width = 0.80, height = 0.80 }
 
 [[window_rule]]
 match.app_id = "^dev.noctalia.UmbrielSharePicker$"

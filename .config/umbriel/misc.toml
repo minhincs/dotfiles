@@ -6,7 +6,12 @@ autostart = [
 ]
 mod_key = "Super"
 xwayland = true
+xwayland_primary_output = "Acer Technologies EK241Y E 1432072153W01"
 show_cheatsheet = false
+
+[events]
+lid_close = """if umbriel outputs --json | jq -e 'any(.[]; .enabled == true and .name != "eDP-1")' >/dev/null; then umbriel msg output-disable eDP-1; fi"""
+lid_open = "umbriel msg output-enable eDP-1"
 
 [environment]
 GTK_IM_MODULE="fcitx"

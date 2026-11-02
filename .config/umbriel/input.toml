@@ -4,6 +4,7 @@ middle_click_paste = false
 [input.touchpad]
 tap = true
 natural_scroll = true
+disable_while_typing = true
 
 [input.tablet]
 enabled = false
@@ -14,7 +15,8 @@ size = 28
 theme = "Capitaine Cursors (Gruvbox) - White"
 hide_when_typing = true
 hide_timeout_ms = 1000
+follows_focus = true
 
 [input.touch]
-enabled = true
+enabled = false
 map_to_output = "eDP-1"
